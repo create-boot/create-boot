@@ -1,6 +1,5 @@
 import { defineBuildConfig } from "unbuild";
 
-
 export default defineBuildConfig({
   entries: ["src/index"],
   clean: true,
@@ -16,8 +15,9 @@ export default defineBuildConfig({
   },
   hooks: {
     "rollup:options": function (ctx, options) {
-      if (!options.plugins)
+      if (!options.plugins) {
         options.plugins = [];
+      }
     },
   },
 });

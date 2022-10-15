@@ -19,23 +19,23 @@ import {
 // Avoids autoconversion to number of the project name by defining that the args
 // non associated with an option ( _ ) needs to be parsed as a string. See #4606
 const argv = minimist<{
-  t?: string
-  template?: string
+  t?: string;
+  template?: string;
 }>(process.argv.slice(2), { string: ["_"] });
 const cwd = process.cwd();
 
 type ColorFunc = (str: string | number) => string;
 interface Framework {
-  name: string
-  display: string
-  color: ColorFunc
-  variants: FrameworkVariant[]
+  name: string;
+  display: string;
+  color: ColorFunc;
+  variants: FrameworkVariant[];
 }
 interface FrameworkVariant {
-  name: string
-  display: string
-  color: ColorFunc
-  customCommand?: string
+  name: string;
+  display: string;
+  color: ColorFunc;
+  customCommand?: string;
 }
 
 const FRAMEWORKS: Framework[] = [
@@ -106,8 +106,9 @@ async function init() {
         },
         {
           type: (_, { overwrite }: { overwrite?: boolean }) => {
-            if (overwrite === false)
+            if (overwrite === false) {
               throw new Error(`${red("✖")} Operation cancelled`);
+            }
 
             return null;
           },
@@ -161,8 +162,7 @@ async function init() {
         },
       },
     );
-  }
-  catch (cancelled: any) {
+  } catch (cancelled: any) {
     console.log(cancelled.message);
     return;
   }
@@ -172,10 +172,11 @@ async function init() {
 
   const root = path.join(cwd, targetDir);
 
-  if (overwrite)
+  if (overwrite) {
     emptyDir(root);
-  else if (!fs.existsSync(root))
+  } else if (!fs.existsSync(root)) {
     fs.mkdirSync(root, { recursive: true });
+  }
 
   // determine template
   const template: string = variant || framework || argTemplate;
@@ -194,11 +195,13 @@ async function init() {
       .replace("@latest", () => (isYarn1 ? "" : "@latest"))
       .replace(/^npm exec/, () => {
         // Prefer `pnpm dlx` or `yarn dlx`
-        if (pkgManager === "pnpm")
+        if (pkgManager === "pnpm") {
           return "pnpm dlx";
+        }
 
-        if (pkgManager === "yarn" && !isYarn1)
+        if (pkgManager === "yarn" && !isYarn1) {
           return "yarn dlx";
+        }
 
         // Use `npm exec` in all other cases,
         // including Yarn 1.x and other custom npm clients.
@@ -222,15 +225,17 @@ async function init() {
 
   const write = (file: string, content?: string) => {
     const targetPath = path.join(root, renameFiles[file] ?? file);
-    if (content)
+    if (content) {
       fs.writeFileSync(targetPath, content);
-    else
+    } else {
       copy(path.join(templateDir, file), targetPath);
+    }
   };
 
   const files = fs.readdirSync(templateDir);
-  for (const file of files.filter(f => f !== "package.json"))
+  for (const file of files.filter(f => f !== "package.json")) {
     write(file);
+  }
 
   const pkg = JSON.parse(
     fs.readFileSync(path.join(templateDir, "package.json"), "utf-8"),
@@ -241,8 +246,9 @@ async function init() {
   write("package.json", JSON.stringify(pkg, null, 2));
 
   console.log("\nDone. Now run:\n");
-  if (root !== cwd)
+  if (root !== cwd) {
     console.log(`  cd ${path.relative(cwd, root)}`);
+  }
 
   switch (pkgManager) {
     case "yarn":
@@ -263,10 +269,11 @@ function formatTargetDir(targetDir: string | undefined) {
 
 function copy(src: string, dest: string) {
   const stat = fs.statSync(src);
-  if (stat.isDirectory())
+  if (stat.isDirectory()) {
     copyDir(src, dest);
-  else
+  } else {
     fs.copyFileSync(src, dest);
+  }
 }
 
 function isValidPackageName(projectName: string) {
@@ -299,20 +306,23 @@ function isEmpty(path: string) {
 }
 
 function emptyDir(dir: string) {
-  if (!fs.existsSync(dir))
+  if (!fs.existsSync(dir)) {
     return;
+  }
 
   for (const file of fs.readdirSync(dir)) {
-    if (file === ".git")
+    if (file === ".git") {
       continue;
+    }
 
     fs.rmSync(path.resolve(dir, file), { recursive: true, force: true });
   }
 }
 
 function pkgFromUserAgent(userAgent: string | undefined) {
-  if (!userAgent)
+  if (!userAgent) {
     return undefined;
+  }
   const pkgSpec = userAgent.split(" ")[0];
   const pkgSpecArr = pkgSpec.split("/");
   return {
