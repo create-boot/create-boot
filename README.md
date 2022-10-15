@@ -48,3 +48,7 @@ Currently supported template presets include:
 - `vite`
 
 You can use `.` for the project name to scaffold in the current directory.
+
+## Thanks
+
+This project is based on [create-vite](https://github.com/vitejs/vite/tree/main/packages/create-vite)
