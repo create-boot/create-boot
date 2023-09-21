@@ -1,7 +1,7 @@
 {
   "name": "create-boot",
   "type": "module",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "packageManager": "pnpm@8.7.6",
   "description": "Scaffolding Your First web app Project",
   "author": "Kirk Lin <linkirk@163.com> (https://github.com/kirklin)",
