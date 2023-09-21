@@ -9,12 +9,12 @@ import {
   cyan,
   green,
   lightGreen,
-  lightRed,
-  magenta,
   red,
   reset,
   yellow,
 } from "kolorist";
+
+const TARGET_DIR = "TARGET_DIR";
 
 // Avoids autoconversion to number of the project name by defining that the args
 // non associated with an option ( _ ) needs to be parsed as a string. See #4606
@@ -30,31 +30,122 @@ interface Framework {
   display: string;
   color: ColorFunc;
   variants: FrameworkVariant[];
-}
+};
 interface FrameworkVariant {
   name: string;
   display: string;
   color: ColorFunc;
   customCommand?: string;
+};
+
+function generateDegitCommand(repository: string, targetDir = TARGET_DIR) {
+  return `npx degit ${repository} ${targetDir}`;
 }
 
 const FRAMEWORKS: Framework[] = [
   {
-    name: "vite",
-    display: "Vite",
+    name: "vue",
+    display: "Vue",
     color: green,
     variants: [
       {
-        name: "vite-boot",
-        display: "vite-boot",
-        color: yellow,
-        customCommand: "npm create vite-boot@latest TARGET_DIR",
+        name: "boot-vue",
+        display: "Vue Bootstrapper(Vue 3, TypeScript, etc.)",
+        color: blue,
+        customCommand: generateDegitCommand("kirklin/boot-vue"),
       },
       {
-        name: "Vite Official",
-        display: "Customize with create-vite",
+        name: "boot-nuxt3",
+        display: "Nuxt 3 Bootstrapper(Vue 3, TypeScript, etc.)",
+        color: blue,
+        customCommand: generateDegitCommand("kirklin/boot-nuxt3"),
+      },
+      {
+        name: "custom-create-vue",
+        display: "Custom Vue Setup ↗",
         color: green,
-        customCommand: "npm create vite@latest TARGET_DIR",
+        customCommand: `npm create vue@latest ${TARGET_DIR}`,
+      },
+      {
+        name: "custom-nuxt",
+        display: "Custom Nuxt Setup ↗",
+        color: lightGreen,
+        customCommand: `npm exec nuxi init ${TARGET_DIR}`,
+      },
+    ],
+  },
+  {
+    name: "react",
+    display: "React",
+    color: cyan,
+    variants: [
+      {
+        name: "boot-react",
+        display: "React Bootstrapper(TypeScript, etc.)",
+        color: blue,
+        customCommand: generateDegitCommand("kirklin/boot-react"),
+      },
+    ],
+  },
+  {
+    name: "kirklin",
+    display: "Kirklin Templates",
+    color: cyan,
+    variants: [
+      {
+        name: "celeris-web",
+        display: "Celeris Web: Highly Performant Vue 3 + Vite + TypeScript template with advanced feature",
+        color: blue,
+        customCommand: generateDegitCommand("kirklin/celeris-web"),
+      },
+      {
+        name: "boot-mini-program",
+        display: "WeChat Mini Program Template (Vue 3, Taro, TypeScript, Uno CSS, etc.)",
+        color: green,
+        customCommand: generateDegitCommand("kirklin/boot-mini-program"),
+      },
+      {
+        name: "boot-uni",
+        display: "uni-app Starter Template(Vue 3, TypeScript, etc.)",
+        color: green,
+        customCommand: generateDegitCommand("kirklin/boot-unplugin"),
+      },
+      {
+        name: "boot-webext",
+        display: "Chrome Extension Starter Template(Vue 3, TypeScript, etc.)",
+        color: yellow,
+        customCommand: generateDegitCommand("kirklin/boot-webext"),
+      },
+      {
+        name: "boot-unplugin",
+        display: "unplugin Starter Template",
+        color: blue,
+        customCommand: generateDegitCommand("kirklin/boot-unplugin"),
+      },
+      {
+        name: "boot-vue-ui-library",
+        display: "Vue UI Library Starter Template",
+        color: blue,
+        customCommand: generateDegitCommand("kirklin/boot-vue-ui-library"),
+      },
+      {
+        name: "boot-slidev",
+        display: "Slides Starter Template",
+        color: blue,
+        customCommand: generateDegitCommand("kirklin/boot-slidev"),
+      },
+    ],
+  },
+  {
+    name: "others",
+    display: "Other Templates",
+    color: reset,
+    variants: [
+      {
+        name: "create-vite",
+        display: "Official Vite Template ↗",
+        color: reset,
+        customCommand: `npm create vite@latest ${TARGET_DIR}`,
       },
     ],
   },
@@ -68,7 +159,7 @@ const renameFiles: Record<string, string | undefined> = {
   _gitignore: ".gitignore",
 };
 
-const defaultTargetDir = "vite-project";
+const defaultTargetDir = "app-project";
 
 async function init() {
   const argTargetDir = formatTargetDir(argv._[0]);
@@ -79,7 +170,7 @@ async function init() {
     targetDir === "." ? path.basename(path.resolve()) : targetDir;
 
   let result: prompts.Answers<
-    "projectName" | "overwrite" | "packageName" | "framework" | "variant"
+      "projectName" | "overwrite" | "packageName" | "framework" | "variant"
   >;
 
   try {
@@ -102,14 +193,13 @@ async function init() {
             `${targetDir === "."
               ? "Current directory"
               : `Target directory "${targetDir}"`
-            } is not empty. Remove existing files and continue?`,
+                 } is not empty. Remove existing files and continue?`,
         },
         {
           type: (_, { overwrite }: { overwrite?: boolean }) => {
             if (overwrite === false) {
               throw new Error(`${red("✖")} Operation cancelled`);
             }
-
             return null;
           },
           name: "overwriteChecker",
@@ -124,14 +214,14 @@ async function init() {
         },
         {
           type:
-            argTemplate && TEMPLATES.includes(argTemplate) ? null : "select",
+                argTemplate && TEMPLATES.includes(argTemplate) ? null : "select",
           name: "framework",
           message:
-            typeof argTemplate === "string" && !TEMPLATES.includes(argTemplate)
-              ? reset(
-                  `"${argTemplate}" isn't a valid template. Please choose from below: `,
-              )
-              : reset("Select a framework:"),
+                typeof argTemplate === "string" && !TEMPLATES.includes(argTemplate)
+                  ? reset(
+                        `"${argTemplate}" isn't a valid template. Please choose from below: `,
+                  )
+                  : reset("Select a framework:"),
           initial: 0,
           choices: FRAMEWORKS.map((framework) => {
             const frameworkColor = framework.color;
@@ -179,37 +269,52 @@ async function init() {
   }
 
   // determine template
-  const template: string = variant || framework || argTemplate;
+  let template: string = variant || framework?.name || argTemplate;
+  let isReactSwc = false;
+  if (template.includes("-swc")) {
+    isReactSwc = true;
+    template = template.replace("-swc", "");
+  }
 
   const pkgInfo = pkgFromUserAgent(process.env.npm_config_user_agent);
   const pkgManager = pkgInfo ? pkgInfo.name : "npm";
   const isYarn1 = pkgManager === "yarn" && pkgInfo?.version.startsWith("1.");
 
   const { customCommand }
-    = FRAMEWORKS.flatMap(f => f.variants).find(v => v.name === template) ?? {};
+  = FRAMEWORKS.flatMap(f => f.variants).find(v => v.name === template) ?? {};
+
   if (customCommand) {
     const fullCustomCommand = customCommand
-      .replace("TARGET_DIR", targetDir)
-      .replace(/^npm create/, `${pkgManager} create`)
-      // Only Yarn 1.x doesn't support `@version` in the `create` command
+      .replace(/^npm create /, () => {
+        // `bun create` uses it's own set of templates,
+        // the closest alternative is using `bun x` directly on the package
+        if (pkgManager === "bun") {
+          return "bun x create-";
+        }
+        return `${pkgManager} create `;
+      })
+    // Only Yarn 1.x doesn't support `@version` in the `create` command
       .replace("@latest", () => (isYarn1 ? "" : "@latest"))
       .replace(/^npm exec/, () => {
-        // Prefer `pnpm dlx` or `yarn dlx`
+        // Prefer `pnpm dlx`, `yarn dlx`, or `bun x`
         if (pkgManager === "pnpm") {
           return "pnpm dlx";
         }
-
         if (pkgManager === "yarn" && !isYarn1) {
           return "yarn dlx";
         }
-
+        if (pkgManager === "bun") {
+          return "bun x";
+        }
         // Use `npm exec` in all other cases,
         // including Yarn 1.x and other custom npm clients.
         return "npm exec";
       });
 
     const [command, ...args] = fullCustomCommand.split(" ");
-    const { status } = spawn.sync(command, args, {
+    // we replace TARGET_DIR here because targetDir may include a space
+    const replacedArgs = args.map(arg => arg.replace(TARGET_DIR, targetDir));
+    const { status } = spawn.sync(command, replacedArgs, {
       stdio: "inherit",
     });
     process.exit(status ?? 0);
@@ -220,7 +325,7 @@ async function init() {
   const templateDir = path.resolve(
     fileURLToPath(import.meta.url),
     "../..",
-    `boot-${template}`,
+      `boot-${template}`,
   );
 
   const write = (file: string, content?: string) => {
@@ -243,13 +348,21 @@ async function init() {
 
   pkg.name = packageName || getProjectName();
 
-  write("package.json", JSON.stringify(pkg, null, 2));
+  write("package.json", `${JSON.stringify(pkg, null, 2)}\n`);
 
-  console.log("\nDone. Now run:\n");
-  if (root !== cwd) {
-    console.log(`  cd ${path.relative(cwd, root)}`);
+  if (isReactSwc) {
+    setupReactSwc(root, template.endsWith("-ts"));
   }
 
+  const cdProjectName = path.relative(cwd, root);
+  console.log("\nDone. Now run:\n");
+  if (root !== cwd) {
+    console.log(
+        `  cd ${
+            cdProjectName.includes(" ") ? `"${cdProjectName}"` : cdProjectName
+        }`,
+    );
+  }
   switch (pkgManager) {
     case "yarn":
       console.log("  yarn");
@@ -277,7 +390,7 @@ function copy(src: string, dest: string) {
 }
 
 function isValidPackageName(projectName: string) {
-  return /^(?:@[a-z0-9-*~][a-z0-9-*._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/.test(
+  return /^(?:@[a-z\d\-*~][a-z\d\-*._~]*\/)?[a-z\d\-~][a-z\d\-._~]*$/.test(
     projectName,
   );
 }
@@ -288,7 +401,7 @@ function toValidPackageName(projectName: string) {
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/^[._]/, "")
-    .replace(/[^a-z0-9-~]+/g, "-");
+    .replace(/[^a-z\d\-~]+/g, "-");
 }
 
 function copyDir(srcDir: string, destDir: string) {
@@ -309,12 +422,10 @@ function emptyDir(dir: string) {
   if (!fs.existsSync(dir)) {
     return;
   }
-
   for (const file of fs.readdirSync(dir)) {
     if (file === ".git") {
       continue;
     }
-
     fs.rmSync(path.resolve(dir, file), { recursive: true, force: true });
   }
 }
@@ -329,6 +440,26 @@ function pkgFromUserAgent(userAgent: string | undefined) {
     name: pkgSpecArr[0],
     version: pkgSpecArr[1],
   };
+}
+
+function setupReactSwc(root: string, isTs: boolean) {
+  editFile(path.resolve(root, "package.json"), (content) => {
+    return content.replace(
+      /"@vitejs\/plugin-react": ".+?"/,
+      "\"@vitejs/plugin-react-swc\": \"^3.3.2\"",
+    );
+  });
+  editFile(
+    path.resolve(root, `vite.config.${isTs ? "ts" : "js"}`),
+    (content) => {
+      return content.replace("@vitejs/plugin-react", "@vitejs/plugin-react-swc");
+    },
+  );
+}
+
+function editFile(file: string, callback: (content: string) => string) {
+  const content = fs.readFileSync(file, "utf-8");
+  fs.writeFileSync(file, callback(content), "utf-8");
 }
 
 init().catch((e) => {
